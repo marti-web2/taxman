@@ -25,3 +25,6 @@ minimist/
 
 # Dev Dependencies in project root
 *.json
+
+# SaSS files
+./client/src/styles/
