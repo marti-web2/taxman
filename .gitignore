@@ -9,10 +9,12 @@
 *.user
 *.userosscache
 *.sln.docstates
+gulpfile.js
 
 # Node.js Tools for Visual Studio
 .ntvs_analysis.dat
 */node_modules/
+node_modules
 minimist/
 
 # Visual Studio Code
@@ -20,3 +22,6 @@ minimist/
 
 # Package Lock files
 */package-lock.json
+
+# Dev Dependencies in project root
+*.json
