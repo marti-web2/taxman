@@ -27,7 +27,7 @@ const Canvas = () => {
       }
     }
 
-    class Pacman {
+    class Player {
       constructor({ position, velocity }) {
         this.position = position
         this.velocity = velocity
@@ -67,15 +67,17 @@ const Canvas = () => {
     let lastKey = ''
 
     const map = [
-      ['-', '-', '-', '-', '-', '-',],
-      ['-', ' ', ' ', ' ', ' ', '-',],
-      ['-', ' ', '-', '-', ' ', '-',],
-      ['-', ' ', ' ', ' ', ' ', '-',],
-      ['-', '-', '-', '-', '-', '-',],
+      ['-', '-', '-', '-', '-', '-', '-',],
+      ['-', ' ', ' ', ' ', ' ', ' ', '-',],
+      ['-', ' ', '-', ' ', '-', ' ', '-',],
+      ['-', ' ', ' ', ' ', ' ', ' ', '-',],
+      ['-', ' ', '-', ' ', '-', ' ', '-',],
+      ['-', ' ', ' ', ' ', ' ', ' ', '-',],
+      ['-', '-', '-', '-', '-', '-', '-',],
     ]
 
     const boundaries = []
-    const pacman = new Pacman({
+    const pacman = new Player({
       position: {
         x: Boundary.width + (Boundary.width / 2),
         y: Boundary.height + (Boundary.height / 2)
@@ -103,38 +105,87 @@ const Canvas = () => {
       })
     })
 
+    function playerCollidesWithBoundary({ player, boundary }) {
+      return (
+        (player.position.y - player.radius + player.velocity.y <= boundary.position.y + boundary.height)
+        && (player.position.x + player.radius + player.velocity.x >= boundary.position.x)
+        && (player.position.y + player.radius + player.velocity.y >= boundary.position.y)
+        && (player.position.x - player.radius + player.velocity.x <= boundary.position.x + boundary.width)
+      )
+    }
+
+    function setVelocity(direction) {
+      let axis, velocity, xVelocity = 0, yVelocity = 0
+      switch (direction) {
+        case 'up':
+          axis = -1
+          velocity = yVelocity = 5 * axis
+          break
+        case 'left':
+          axis = -1
+          velocity = xVelocity = 5 * axis
+          break
+        case 'down':
+          axis = 1
+          velocity = yVelocity = 5 * axis
+          break
+        case 'right':
+          axis = 1
+          velocity = xVelocity = 5 * axis
+          break
+        default:
+          return
+      }
+      for (let boundary of boundaries) {
+        if (playerCollidesWithBoundary({ player: { ...pacman, velocity: { x: xVelocity, y: yVelocity } }, boundary: boundary })) {
+          velocity = 0
+          break
+        }
+      }
+      return velocity
+    }
+
     function animate() {
       requestAnimationFrame(animate)
-      ctx.clearRect(0,0,canvas.width, canvas.height)
-      boundaries.forEach((boundary) => {
-        boundary.draw()
-      })
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      pacman.update()
-      pacman.velocity.y = 0
-      pacman.velocity.x = 0
-
-      switch(true) {
+      switch (true) {
         case keys.w.pressed && lastKey === 'w':
-          pacman.velocity.y = -5
+          pacman.velocity.y = setVelocity('up')
           break
         case keys.a.pressed && lastKey === 'a':
-          pacman.velocity.x = -5
+          pacman.velocity.x = setVelocity('left')
           break
         case keys.s.pressed && lastKey === 's':
-          pacman.velocity.y = 5
+          pacman.velocity.y = setVelocity('down')
           break
         case keys.d.pressed && lastKey === 'd':
-          pacman.velocity.x = 5
+          pacman.velocity.x = setVelocity('right')
           break
         default:
           break
       }
 
+      boundaries.forEach((boundary) => {
+        boundary.draw()
+
+        if (playerCollidesWithBoundary({ player: pacman, boundary: boundary })) {
+          console.log('collision with boundary')
+          pacman.velocity.x = 0
+          pacman.velocity.y = 0
+        }
+      })
+
+      pacman.update()
+      // pacman.velocity.y = 0
+      // pacman.velocity.x = 0
+
+
+
     }
 
     animate()
-   
+
     window.addEventListener('keydown', ({ key }) => {
       switch (key) {
         case 'w':
