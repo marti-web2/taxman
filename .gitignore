@@ -21,7 +21,4 @@ minimist/
 .vscode
 
 # Package Lock files
-*/package-lock.json
-
-# Dev Dependencies in project root
-*.json
+package-lock.json
