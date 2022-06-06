@@ -68,6 +68,24 @@
     }
   }
 
+  class Pellet {
+    constructor({ position }) {
+      this.position = position
+     
+      this.radius = 3
+    }
+
+    draw() {
+      ctx.beginPath()
+      ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2)
+      ctx.fillStyle = 'white'
+      ctx.fill()
+      ctx.closePath()
+    }
+
+  
+  }
+
   const keys = {
     w: {
       pressed: false,
@@ -100,6 +118,8 @@
     ['|', '.', '.', '.', '.', '.', '.', '.', '.', 'p', '|'],
     ['4', '-', '-', '-', '-', '-', '-', '-', '-', '-', '3']
   ]
+
+  const pellets = []
 
   const boundaries = []
 
@@ -293,16 +313,16 @@
             })
           )
           break
-        // case '.':
-        //   pellets.push(
-        //     new Pellet({
-        //       position: {
-        //         x: j * Boundary.width + Boundary.width / 2,
-        //         y: i * Boundary.height + Boundary.height / 2
-        //       }
-        //     })
-        //   )
-        //   break
+        case '.':
+          pellets.push(
+            new Pellet({
+              position: {
+                x: j * Boundary.width + Boundary.width / 2,
+                y: i * Boundary.height + Boundary.height / 2
+              }
+            })
+          )
+          break
       }
     })
   })
@@ -374,7 +394,12 @@
         pacman.velocity.x = 0
         pacman.velocity.y = 0
       }
-    }, false)
+    })
+
+    pellets.forEach((pellet) =>{
+      pellet.draw()
+    })
+
 
     pacman.update()
   }
