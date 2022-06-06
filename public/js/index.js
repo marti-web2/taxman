@@ -1,11 +1,13 @@
 ; (function () {
 
-  let canvas, ctx, pacman
+  let canvas, ctx, pacman, scoreBoard
 
   /* Before drawing anything, make sure the DOM (HTML) finished loading to avoid any related errors. */
   function init() {
     canvas = document.getElementById('pac-maze')
     ctx = canvas.getContext('2d')
+
+    scoreBoard = document.getElementById('score-board')
 
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
@@ -102,6 +104,8 @@
   }
 
   let lastKey = ''
+  let score = 0
+  
 
   const map = [
     ['1', '-', '-', '-', '-', '-', '-', '-', '-', '-', '2'],
@@ -396,13 +400,16 @@
       }
     })
 
+    // Pacman touches a pellet
     for(let i = pellets.length - 1; i> 0; i--){
       const pellet = pellets[i]
       pellet.draw()
 
       if(Math.hypot(pellet.position.x - pacman.position.x, pellet.position.y - pacman.position.y) < pellet.radius + pacman.radius) {
-        // console.log('player touch pellet')
+    
         pellets.splice(i, 1)
+        score += 10
+        scoreBoard.innerHTML = score
       }
     }
 
