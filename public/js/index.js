@@ -396,9 +396,15 @@
       }
     })
 
-    pellets.forEach((pellet) =>{
+    for(let i = pellets.length - 1; i> 0; i--){
+      const pellet = pellets[i]
       pellet.draw()
-    })
+
+      if(Math.hypot(pellet.position.x - pacman.position.x, pellet.position.y - pacman.position.y) < pellet.radius + pacman.radius) {
+        // console.log('player touch pellet')
+        pellets.splice(i, 1)
+      }
+    }
 
 
     pacman.update()
