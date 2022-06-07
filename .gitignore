@@ -9,7 +9,6 @@
 *.user
 *.userosscache
 *.sln.docstates
-gulpfile.js
 
 # Node.js Tools for Visual Studio
 .ntvs_analysis.dat
@@ -19,6 +18,3 @@ minimist/
 
 # Visual Studio Code
 .vscode
-
-# Package Lock files
-package-lock.json
