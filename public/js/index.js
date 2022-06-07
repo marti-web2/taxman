@@ -1,6 +1,7 @@
 ; (function () {
 
   let canvas, ctx, pacman, scoreBoard
+  const ghosts = []
 
   /* Before drawing anything, make sure the DOM (HTML) finished loading to avoid any related errors. */
   function init() {
@@ -23,6 +24,30 @@
       }
     })
 
+    ghosts.push(
+      new Ghost({
+        position: {
+          x: Boundary.width * 6 + Boundary.width / 2,
+          y: Boundary.height + Boundary.height / 2
+        },
+        velocity: {
+          x: Ghost.speed,
+          y: 0
+        }
+      }),
+      new Ghost({
+        position: {
+          x: Boundary.width * 6 + Boundary.width / 2,
+          y: Boundary.height * 3 + Boundary.height / 2
+        },
+        velocity: {
+          x: Ghost.speed,
+          y: 0
+        },
+        color: 'pink'
+      })
+    )
+
     animate()
   }
 
@@ -40,11 +65,7 @@
     }
 
     draw() {
-      // ctx.fillStyle = 'blue'
-      // ctx.fillRect(this.position.x, this.position.y, this.width, this.height)
-
       ctx.drawImage(this.image, this.position.x, this.position.y)
-
     }
   }
 
@@ -70,10 +91,35 @@
     }
   }
 
+  class Ghost {
+    static speed = 2
+    constructor({ position, velocity, color = 'red' }) {
+      this.position = position
+      this.velocity = velocity
+      this.radius = 15
+      this.color = color
+      this.prevCollisions = []
+      this.speed = 2
+    }
+
+    draw() {
+      ctx.beginPath()
+      ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2)
+      ctx.fillStyle = this.color
+      ctx.fill()
+      ctx.closePath()
+    }
+
+    update() {
+      this.draw()
+      this.position.x += this.velocity.x
+      this.position.y += this.velocity.y
+    }
+  }
+
   class Pellet {
     constructor({ position }) {
       this.position = position
-     
       this.radius = 3
     }
 
@@ -85,7 +131,7 @@
       ctx.closePath()
     }
 
-  
+
   }
 
   const keys = {
@@ -105,7 +151,7 @@
 
   let lastKey = ''
   let score = 0
-  
+
 
   const map = [
     ['1', '-', '-', '-', '-', '-', '-', '-', '-', '-', '2'],
@@ -124,7 +170,6 @@
   ]
 
   const pellets = []
-
   const boundaries = []
 
   function createImage(src) {
@@ -133,7 +178,7 @@
 
     return image
   }
- 
+
 
   map.forEach((row, i) => {
     row.forEach((symbol, j) => {
@@ -332,11 +377,12 @@
   })
 
   function playerCollidesWithBoundary({ player, boundary }) {
+    const padding = Boundary.width / 2 - player.radius - 1
     return (
-      (player.position.y - player.radius + player.velocity.y <= boundary.position.y + boundary.height)
-      && (player.position.x + player.radius + player.velocity.x >= boundary.position.x)
-      && (player.position.y + player.radius + player.velocity.y >= boundary.position.y)
-      && (player.position.x - player.radius + player.velocity.x <= boundary.position.x + boundary.width)
+      (player.position.y - player.radius + player.velocity.y <= boundary.position.y + boundary.height + padding)
+      && (player.position.x + player.radius + player.velocity.x >= boundary.position.x - padding)
+      && (player.position.y + player.radius + player.velocity.y >= boundary.position.y - padding)
+      && (player.position.x - player.radius + player.velocity.x <= boundary.position.x + boundary.width + padding)
     )
   }
 
@@ -371,8 +417,10 @@
     return velocity
   }
 
+  let animationId
+
   const animate = () => {
-    requestAnimationFrame(animate)
+    animationId = requestAnimationFrame(animate)
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     switch (true) {
@@ -401,12 +449,12 @@
     })
 
     // Pacman touches a pellet
-    for(let i = pellets.length - 1; i> 0; i--){
+    for (let i = pellets.length - 1; i > 0; i--) {
       const pellet = pellets[i]
       pellet.draw()
 
-      if(Math.hypot(pellet.position.x - pacman.position.x, pellet.position.y - pacman.position.y) < pellet.radius + pacman.radius) {
-    
+      if (Math.hypot(pellet.position.x - pacman.position.x, pellet.position.y - pacman.position.y) < pellet.radius + pacman.radius) {
+
         pellets.splice(i, 1)
         score += 10
         scoreBoard.innerHTML = score
@@ -415,6 +463,80 @@
 
 
     pacman.update()
+
+    ghosts.forEach((ghost) => {
+      ghost.update()
+
+      if (Math.hypot(ghost.position.x - pacman.position.x, ghost.position.y - pacman.position.y) < ghost.radius + pacman.radius) {
+
+        cancelAnimationFrame(animationId)
+      }
+
+      const collisions = []
+
+      boundaries.forEach((boundary) => {
+        if (!collisions.includes('up') && playerCollidesWithBoundary({ player: { ...ghost, velocity: { x: 0, y: -ghost.speed } }, boundary: boundary })) {
+          collisions.push('up')
+        }
+        if (!collisions.includes('left') && playerCollidesWithBoundary({ player: { ...ghost, velocity: { x: -ghost.speed, y: 0 } }, boundary: boundary })) {
+          collisions.push('left')
+        }
+        if (!collisions.includes('down') && playerCollidesWithBoundary({ player: { ...ghost, velocity: { x: 0, y: ghost.speed } }, boundary: boundary })) {
+          collisions.push('down')
+        }
+        if (!collisions.includes('right') && playerCollidesWithBoundary({ player: { ...ghost, velocity: { x: ghost.speed, y: 0 } }, boundary: boundary })) {
+          collisions.push('right')
+        }
+      })
+
+      if (collisions.length > ghost.prevCollisions.length) {
+        ghost.prevCollisions = collisions
+      }
+
+      if (JSON.stringify(collisions) !== JSON.stringify(ghost.prevCollisions)) {
+        // console.log('gogo')
+
+        if(ghost.velocity.x > 0){
+          ghost.prevCollisions.push('right')
+        } else if(ghost.velocity.x < 0){
+          ghost.prevCollisions.push('left')
+        } else if(ghost.velocity.y < 0){
+          ghost.prevCollisions.push('up')
+        } else if(ghost.velocity.y > 0){
+          ghost.prevCollisions.push('down')
+        }
+        const pathways = ghost.prevCollisions.filter(collision => {
+          return !collisions.includes(collision)
+        })
+
+
+        // get a random pathway for the Ghost
+        const direction = pathways[Math.floor(Math.random()*pathways.length)]
+        // console.log(pathways)
+
+        switch(direction){
+          case 'down':
+            ghost.velocity.y = ghost.speed
+            ghost.velocity.x = 0
+            break
+          case 'up':
+            ghost.velocity.y = -ghost.speed
+            ghost.velocity.x = 0
+            break
+          case 'right':
+            ghost.velocity.y = 0
+            ghost.velocity.x = ghost.speed
+            break
+          case 'left':
+            ghost.velocity.y = 0
+            ghost.velocity.x = -ghost.speed
+            break
+          default:
+            break
+        }
+        ghost.prevCollisions = []
+      }
+    })
   }
 
 
