@@ -100,12 +100,13 @@
       this.color = color
       this.prevCollisions = []
       this.speed = 2
+      this.scared = false
     }
 
     draw() {
       ctx.beginPath()
       ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2)
-      ctx.fillStyle = this.color
+      ctx.fillStyle = this.scared ? 'blue' : this.color
       ctx.fill()
       ctx.closePath()
     }
@@ -130,8 +131,21 @@
       ctx.fill()
       ctx.closePath()
     }
+  }
 
+  class PowerUp {
+    constructor({ position }) {
+      this.position = position
+      this.radius = 8
+    }
 
+    draw() {
+      ctx.beginPath()
+      ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2)
+      ctx.fillStyle = 'white'
+      ctx.fill()
+      ctx.closePath()
+    }
   }
 
   const keys = {
@@ -171,6 +185,7 @@
 
   const pellets = []
   const boundaries = []
+  const powerups = []
 
   function createImage(src) {
     const image = new Image()
@@ -372,6 +387,16 @@
             })
           )
           break
+        case 'p':
+          powerups.push(
+            new PowerUp({
+              position: {
+                x: j * Boundary.width + Boundary.width / 2,
+                y: i * Boundary.height + Boundary.height / 2
+              }
+            })
+          )
+          break
       }
     })
   })
@@ -448,8 +473,50 @@
       }
     })
 
-    // Pacman touches a pellet
-    for (let i = pellets.length - 1; i > 0; i--) {
+    // detect collision between Ghost and Player
+    function ghostCollidesWithPlayer(ghost) {
+      return (
+        Math.hypot(ghost.position.x - pacman.position.x, ghost.position.y - pacman.position.y)
+        < ghost.radius + pacman.radius
+      )
+    }
+
+    for(let i = ghosts.length -1; i>=0; i--) {
+      const ghost = ghosts[i]
+      // Ghost collides with Player
+      if (ghostCollidesWithPlayer(ghost)) 
+        if (ghost.scared) { ghosts.splice(i, 1) }
+
+      else {
+        cancelAnimationFrame(animationId)
+      }
+    }
+    
+
+    // where PowerUps go
+    for (let i = powerups.length - 1; i >= 0; i--) {
+      const powerUp = powerups[i]
+      powerUp.draw()
+
+      // Player collides with PowerUp
+      if (Math.hypot(powerUp.position.x - pacman.position.x, powerUp.position.y - pacman.position.y) < powerUp.radius + pacman.radius) {
+
+        powerups.splice(i, 1)
+
+        // make ghosts scared
+        ghosts.forEach((ghost) => {
+          ghost.scared = true
+
+          setTimeout(_ => {
+            ghost.scared = false
+            console.log(ghost.scared)
+          }, 5000)
+        })
+      }
+    }
+
+    // Pacman touches a pellet here
+    for (let i = pellets.length - 1; i >= 0; i--) {
       const pellet = pellets[i]
       pellet.draw()
 
@@ -462,15 +529,13 @@
     }
 
 
+
     pacman.update()
 
     ghosts.forEach((ghost) => {
       ghost.update()
 
-      if (Math.hypot(ghost.position.x - pacman.position.x, ghost.position.y - pacman.position.y) < ghost.radius + pacman.radius) {
 
-        cancelAnimationFrame(animationId)
-      }
 
       const collisions = []
 
@@ -496,13 +561,13 @@
       if (JSON.stringify(collisions) !== JSON.stringify(ghost.prevCollisions)) {
         // console.log('gogo')
 
-        if(ghost.velocity.x > 0){
+        if (ghost.velocity.x > 0) {
           ghost.prevCollisions.push('right')
-        } else if(ghost.velocity.x < 0){
+        } else if (ghost.velocity.x < 0) {
           ghost.prevCollisions.push('left')
-        } else if(ghost.velocity.y < 0){
+        } else if (ghost.velocity.y < 0) {
           ghost.prevCollisions.push('up')
-        } else if(ghost.velocity.y > 0){
+        } else if (ghost.velocity.y > 0) {
           ghost.prevCollisions.push('down')
         }
         const pathways = ghost.prevCollisions.filter(collision => {
@@ -511,10 +576,10 @@
 
 
         // get a random pathway for the Ghost
-        const direction = pathways[Math.floor(Math.random()*pathways.length)]
+        const direction = pathways[Math.floor(Math.random() * pathways.length)]
         // console.log(pathways)
 
-        switch(direction){
+        switch (direction) {
           case 'down':
             ghost.velocity.y = ghost.speed
             ghost.velocity.x = 0
