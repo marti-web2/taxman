@@ -491,6 +491,12 @@
         cancelAnimationFrame(animationId)
       }
     }
+
+    // win condition
+    if(pellets.length === 0) { 
+      console.log('you win')
+      cancelAnimationFrame(animationId)
+    }
     
 
     // where PowerUps go
