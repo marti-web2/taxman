@@ -1,4 +1,4 @@
-; (function () {
+;(function () {
 
   let canvas, ctx, pacman, scoreBoard
   const ghosts = []
